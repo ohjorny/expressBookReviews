@@ -102,15 +102,30 @@ public_users.get('/author/:author', async (req, res) => {
 });
 
 // Get all books based on title
-public_users.get('/title/:title', function (req, res) {
+public_users.get('/title/:title', async (req, res) => {
   const givenTitle = req.params.title;
-  const listOfTitles = Object.values(books);
-  const matchingTitles = listOfTitles.filter((item) => item.title === givenTitle);
-  if (matchingTitles.length > 0) {
-    res.send(JSON.stringify(matchingTitles, null, 4));
-  }
-  else {
-    res.send(`No books found with title ${givenTitle}`);
+  try {
+    const titleData = await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const listOfItems = Object.values(books);
+        const matchingBooks = listOfItems.filter((item) => item.title === givenTitle);
+        if (matchingBooks.length > 0) {
+          resolve(matchingBooks);
+        }
+        else {
+          reject(new Error(`No book found with author ${givenTitle}`));
+        }
+      }, 1000);
+    });
+    if (titleData) {
+      res.send(JSON.stringify(titleData, null, 4));
+    }
+    else {
+      res.status(404).json({ message: `Book not found with ISBN ${givenTitle}` });
+    }
+  } catch (err) {
+    console.error("Issue retrieving book: ", err.message);
+    res.status(500).json({ message: "Internal error retrieving book" });
   }
 });
 
